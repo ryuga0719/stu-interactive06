@@ -2,12 +2,14 @@ lockfileVersion: 5.4
 
 specifiers:
   autoprefixer: ^10.4.7
+  gsap: ^3.10.4
   postcss: ^8.4.14
   sass: ^1.53.0
   tailwindcss: ^3.1.6
   vite: ^3.0.0
 
 dependencies:
+  gsap: 3.10.4
   tailwindcss: 3.1.6
 
 devDependencies:
@@ -426,6 +428,10 @@ packages:
     engines: {node: '>=10.13.0'}
     dependencies:
       is-glob: 4.0.3
+    dev: false
+
+  /gsap/3.10.4:
+    resolution: {integrity: sha512-6QatdkKxXCMfvCW4rM++0RqyLQAzFX5nwl3yHS0XPgkZBkiSEY3VZVbMltrdtsbER/xZonLtyHt684wRp4erlQ==}
     dev: false
 
   /has/1.0.3:
