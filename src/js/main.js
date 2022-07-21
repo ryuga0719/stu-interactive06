@@ -37,14 +37,12 @@ function init() {
 // 毎フレーム実行
 window.requestAnimationFrame(update);
 function update() {
-  // let tg = $(".js-tg");
-
   if (mouse.isDown) {
     // マウス押してるときは、マウスダウン時からのマウス移動量をちゃんと計算
     mouse.dist.x = mouse.x - mouse.start.x;
     mouse.dist.y = mouse.y - mouse.start.y;
 
-    let friction = 0.9; // 摩擦係数
+    let friction = 0.5; // 摩擦係数
     mouse.dist.x *= friction;
     mouse.dist.y *= friction;
   } else {
@@ -59,10 +57,12 @@ function update() {
   param.y += (mouse.dist.y - param.y) * ease;
 
   // ターゲットの移動量を更新
-  // if (mouse.isDown) {
-  // }
+
   gsap.to(tg, {
     rotationZ: degree2Radian(param.x * param.y) * 0.1,
+    rotationX: degree2Radian(param.x * param.y) * 0.1,
+    rotationY: degree2Radian(param.x * param.y) * 0.1,
+    x: param.x,
     x: param.x,
     y: param.y,
   });
