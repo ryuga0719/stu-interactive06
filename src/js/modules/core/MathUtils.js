@@ -50,11 +50,20 @@ export const radian2Degree = (val) => {
 };
 
 /**
-* 範囲指定でランダム値を生成できる
-* @param {number} min - ランダム値の最小値
-* @param {number} max - ランダム値の最大値(未満)
-* @returns {number} 指定範囲のランダム値
-*/
+ * 範囲指定でランダム値を生成できる
+ * @param {number} min - ランダム値の最小値
+ * @param {number} max - ランダム値の最大値(未満)
+ * @returns {number} 指定範囲のランダム値
+ */
 export const randomRange = (min, max) => {
- return (Math.random() * (max - min) ) + min;
-}
+  return Math.random() * (max - min) + min;
+};
+
+/**
+ * Boolean値の反転
+ * @param {boolean} - フラグ
+ * @returns {boolean} フラグを反転した値
+ */
+export const reverseFlg = (flg) => {
+  return !flg;
+};
