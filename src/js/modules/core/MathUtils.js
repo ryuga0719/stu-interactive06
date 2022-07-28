@@ -58,12 +58,3 @@ export const radian2Degree = (val) => {
 export const randomRange = (min, max) => {
   return Math.random() * (max - min) + min;
 };
-
-/**
- * Boolean値の反転
- * @param {boolean} - フラグ
- * @returns {boolean} フラグを反転した値
- */
-export const reverseFlg = (flg) => {
-  return !flg;
-};

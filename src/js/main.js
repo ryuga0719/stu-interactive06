@@ -1,5 +1,5 @@
 import { log } from "./modules/core/Debug";
-import { degree2Radian, reverseFlg } from "./modules/core/MathUtils";
+import { degree2Radian } from "./modules/core/MathUtils";
 import gsap from "gsap";
 import $ from "jquery";
 
@@ -55,6 +55,10 @@ function update() {
   let ease = 0.125; // イージング量 小さいとゆっくり
   param.x += (mouse.dist.x - param.x) * ease;
   param.y += (mouse.dist.y - param.y) * ease;
+  const hypot = Math.hypot(param.x, param.y);
+  // 正規化
+  const normalizedHypot = normalize(hypot, 700);
+  const scalableHypot = normalizedHypot * 255;
 
   // ターゲットの移動量を更新
 
@@ -65,6 +69,7 @@ function update() {
     x: param.x,
     x: param.x,
     y: param.y,
+    backgroundColor: `rgb(${scalableHypot},0,0)`,
   });
 
   window.requestAnimationFrame(update);
@@ -81,11 +86,11 @@ function mouseMove(e) {
 
 /**
  * マウスを押下した時の処理
- * @param {e} - event
+ * @param {event} - event
  */
 function mouseDown(e) {
   if (!mouse.isDown) {
-    mouse.isDown = reverseFlg(mouse.isDown);
+    mouse.isDown = !mouse.isDown;
     mouse.start.x = e.clientX;
     mouse.start.y = e.clientY;
   }
@@ -93,8 +98,22 @@ function mouseDown(e) {
 
 /**
  * マウスを離した時の処理
- * @param {e} - event
+ * @param {event} - event
  */
 function mouseUp(e) {
-  mouse.isDown = reverseFlg(mouse.isDown);
+  mouse.isDown = !mouse.isDown;
+}
+
+/**
+ * 数値の正規化
+ * @param {number} - 正規化する数値
+ * @param {number} - 正規化するデータの最大値
+ * @returns {number} - 正規化後の数値
+ */
+function normalize(num, max) {
+  let normalizedNum = num / max;
+  if (normalizedNum > 1) {
+    normalizedNum = 1;
+  }
+  return normalizedNum;
 }
