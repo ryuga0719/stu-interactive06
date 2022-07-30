@@ -1,119 +1,157 @@
-import { log } from "./modules/core/Debug";
-import { degree2Radian } from "./modules/core/MathUtils";
+import { degree2Radian, normalize, orgRound } from "./modules/core/MathUtils";
 import gsap from "gsap";
 import $ from "jquery";
+import Pull from "./modules/Pull";
+import { mouse } from "./modules/Mouse";
+import { FRACTION, EASING } from "./const/index";
 
-// ターゲットの移動量
-let param = {
+// ターゲットの情報
+let target = {
+  element: $(".js-tg"),
   x: 0,
   y: 0,
 };
 
-// マウス
-let mouse = {
-  isDown: false, // 画面押されてるか
-  x: 0, // マウス位置 X
-  y: 0, // マウス位置 Y
-  start: { x: 0, y: 0 }, // マウスダウン時の座標
-  dist: { x: 0, y: 0 }, // マウスダウンしてからの移動距離
+// マウスの移動距離
+let mouseDist = {
+  x: 0,
+  y: 0,
 };
-
-// 初期のターゲット
-let tg = $(".js-tg");
 
 // 初期設定
 init();
+// doAnimation();
+
+/**
+ * 初期実行
+ */
 function init() {
-  $(window)
-    .on("mousemove", mouseMove)
-    .on("mousedown", mouseDown)
-    .on("mouseup", mouseUp);
-  $(".js-tg").on("mousedown", function (e, v) {
-    tg = $(this);
+  $(".js-tg").on("mousedown", function () {
+    target.element = $(this);
   });
-  update();
+  animate();
 }
 
-// 毎フレーム実行
-window.requestAnimationFrame(update);
-function update() {
+/**
+ * アニメーション
+ */
+function animate() {
   if (mouse.isDown) {
-    // マウス押してるときは、マウスダウン時からのマウス移動量をちゃんと計算
-    mouse.dist.x = mouse.x - mouse.start.x;
-    mouse.dist.y = mouse.y - mouse.start.y;
+    // マウス押下時からのマウス移動量を計算
+    mouseDist.x = calcDiff(mouse.position.x, mouse.start.x);
+    mouseDist.y = calcDiff(mouse.position.y, mouse.start.y);
 
-    let friction = 0.5; // 摩擦係数
-    mouse.dist.x *= friction;
-    mouse.dist.y *= friction;
+    // 摩擦係数追加
+    mouseDist.x = addFraction(mouseDist.x);
+    mouseDist.y = addFraction(mouseDist.y);
   } else {
-    // マウス押してないときの移動量は0
-    mouse.dist.x = 0;
-    mouse.dist.y = 0;
+    // マウスを押下していない時はmouseDistをreset
+    resetMouseDist();
   }
 
-  // 滑らかに移動させるためイージングつける
-  let ease = 0.125; // イージング量 小さいとゆっくり
-  param.x += (mouse.dist.x - param.x) * ease;
-  param.y += (mouse.dist.y - param.y) * ease;
-  const hypot = Math.hypot(param.x, param.y);
+  // マウスとターゲットとの距離を計算
+  const targetDiffX = calcDiff(mouseDist.x, target.x);
+  const targetDiffY = calcDiff(mouseDist.y, target.y);
+
+  // イージング付与
+  target.x += addEasing(targetDiffX);
+  target.y += addEasing(targetDiffY);
+
+  // ユークリッド距離を計算
+  const dist = Math.hypot(target.x, target.y);
+
   // 正規化
-  const normalizedHypot = normalize(hypot, 700);
-  const scalableHypot = normalizedHypot * 255;
+  const normalizedDist = normalize(dist, 700, 0); // distを正規化
+  const truncatedDist = truncate(normalizedDist); // 正規化条件の追加
+  let colorScale = convertColorScale(truncatedDist); // カラースケールに調整
+  colorScale = orgRound(colorScale, 1); // 四捨五入
 
-  // ターゲットの移動量を更新
+  // ターゲットをアニメーション
+  doGsap(colorScale);
 
-  gsap.to(tg, {
-    rotationZ: degree2Radian(param.x * param.y) * 0.1,
-    rotationX: degree2Radian(param.x * param.y) * 0.1,
-    rotationY: degree2Radian(param.x * param.y) * 0.1,
-    x: param.x,
-    x: param.x,
-    y: param.y,
-    backgroundColor: `rgb(${scalableHypot},0,0)`,
+  // requestAnimationFrame実行
+  doAnimation();
+}
+
+/**
+ * gsapのアニメーションを実行する
+ * @param {number} - scalableDist rgb値を調整する値
+ */
+function doGsap(colorScale) {
+  gsap.to(target.element, {
+    rotationZ: degree2Radian(target.x * target.y) * 0.1,
+    rotationX: degree2Radian(target.x * target.y) * 0.1,
+    rotationY: degree2Radian(target.x * target.y) * 0.1,
+    x: target.x,
+    y: target.y,
+    backgroundColor: `rgba(${colorScale},0,0,1)`,
   });
-
-  window.requestAnimationFrame(update);
 }
 
 /**
- * マウスを動かした時の処理
- * @param {event} - event
+ * アニメーションの継続実行
  */
-function mouseMove(e) {
-  mouse.x = e.clientX;
-  mouse.y = e.clientY;
+function doAnimation() {
+  window.requestAnimationFrame(animate);
 }
 
 /**
- * マウスを押下した時の処理
- * @param {event} - event
+ * 値が1を超えたら1にする
+ * @param {number} val - 検査する値
+ * @returns {number} truncateした値
  */
-function mouseDown(e) {
-  if (!mouse.isDown) {
-    mouse.isDown = !mouse.isDown;
-    mouse.start.x = e.clientX;
-    mouse.start.y = e.clientY;
-  }
+function truncate(val) {
+  if (val <= 1) return val;
+  return 1;
 }
 
 /**
- * マウスを離した時の処理
- * @param {event} - event
+ * 0~1の値を0~255に変換
+ * @param {number} val - 変換する値
+ * @returns {number} 変換後の値
  */
-function mouseUp(e) {
-  mouse.isDown = !mouse.isDown;
+function convertColorScale(val) {
+  return val * 255;
 }
 
 /**
- * 数値の正規化
- * @param {number} - 正規化する数値
- * @param {number} - 正規化するデータの最大値
- * @returns {number} - 正規化後の数値
+ * 差分を計算
+ * @param {number} x1 - 値1
+ * @param {number} x2 - 値2
+ * @returns {number} 差分
  */
-function normalize(num, max) {
-  let normalizedNum = num / max;
-  if (normalizedNum > 1) {
-    normalizedNum = 1;
-  }
-  return normalizedNum;
+function calcDiff(x1, x2) {
+  return x1 - x2;
 }
+
+/**
+ * 引数の値に摩擦係数を追加して返す
+ * @param {number} val - 摩擦係数を掛ける値
+ * @returns {number} 摩擦係数をかけた値
+ *
+ */
+function addFraction(val) {
+  return val * FRACTION;
+}
+
+/**
+ * 引数の値にイージングを追加して返す
+ * @param {number} val - イージングを掛ける値
+ * @returns {number} イージングをかけた値
+ *
+ */
+function addEasing(val) {
+  return val * EASING;
+}
+
+/**
+ * mouseDistを初期化
+ */
+function resetMouseDist() {
+  mouseDist.x = 0;
+  mouseDist.y = 0;
+}
+
+// test用
+// const elements = $(".js-tg");
+// const pull = new Pull(elements);
