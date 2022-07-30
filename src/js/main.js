@@ -1,13 +1,14 @@
 import { degree2Radian, normalize, orgRound } from "./modules/core/MathUtils";
 import gsap from "gsap";
-import $ from "jquery";
 import Pull from "./modules/Pull";
 import { mouse } from "./modules/Mouse";
 import { FRACTION, EASING } from "./const/index";
 
+// targetの要素
+let targetEl = document.querySelectorAll(".js-tg");
+
 // ターゲットの情報
 let target = {
-  element: $(".js-tg"),
   x: 0,
   y: 0,
 };
@@ -20,22 +21,33 @@ let mouseDist = {
 
 // 初期設定
 init();
-// doAnimation();
+doAnimation();
 
 /**
  * 初期実行
  */
 function init() {
-  $(".js-tg").on("mousedown", function () {
-    target.element = $(this);
-  });
-  animate();
+  setTargetElement(); // ターゲットの要素をセット
+  animate(); // アニメーション
+}
+
+/**
+ * ターゲットとなる要素をセット
+ */
+function setTargetElement() {
+  const list = document.querySelectorAll(".js-tg");
+  for (let i = 0; i < list.length; i++) {
+    list[i].addEventListener("mousedown", function () {
+      targetEl = this;
+    });
+  }
 }
 
 /**
  * アニメーション
  */
 function animate() {
+  // console.log("do animate");
   if (mouse.isDown) {
     // マウス押下時からのマウス移動量を計算
     mouseDist.x = calcDiff(mouse.position.x, mouse.start.x);
@@ -45,7 +57,7 @@ function animate() {
     mouseDist.x = addFraction(mouseDist.x);
     mouseDist.y = addFraction(mouseDist.y);
   } else {
-    // マウスを押下していない時はmouseDistをreset
+    // マウスを押下していない時はmouseDistをリセット
     resetMouseDist();
   }
 
@@ -78,7 +90,7 @@ function animate() {
  * @param {number} - scalableDist rgb値を調整する値
  */
 function doGsap(colorScale) {
-  gsap.to(target.element, {
+  gsap.to(targetEl, {
     rotationZ: degree2Radian(target.x * target.y) * 0.1,
     rotationX: degree2Radian(target.x * target.y) * 0.1,
     rotationY: degree2Radian(target.x * target.y) * 0.1,
